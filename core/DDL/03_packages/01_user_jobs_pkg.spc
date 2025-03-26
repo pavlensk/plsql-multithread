@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE user_jobs_pkg AS
 
-  -- этот тип нужен для джобов, не смотри на него, пусть таким и остается
+  -- СЌС‚РѕС‚ С‚РёРї РЅСѓР¶РµРЅ РґР»СЏ РґР¶РѕР±РѕРІ, РЅРµ СЃРјРѕС‚СЂРё РЅР° РЅРµРіРѕ, РїСѓСЃС‚СЊ С‚Р°РєРёРј Рё РѕСЃС‚Р°РµС‚СЃСЏ
   TYPE t_describe IS RECORD(
      NAME          VARCHAR2(100)
     ,overload      dbms_describe.number_table
@@ -16,13 +16,13 @@ CREATE OR REPLACE PACKAGE user_jobs_pkg AS
     ,radix         dbms_describe.number_table
     ,spare         dbms_describe.number_table);
 
-  -- создание программы для джоба
+  -- СЃРѕР·РґР°РЅРёРµ РїСЂРѕРіСЂР°РјРјС‹ РґР»СЏ РґР¶РѕР±Р°
   PROCEDURE create_program
   (
     p_program_name   VARCHAR2
    ,p_program_action VARCHAR2
   );
-  -- создание самого джоба
+  -- СЃРѕР·РґР°РЅРёРµ СЃР°РјРѕРіРѕ РґР¶РѕР±Р°
   PROCEDURE create_user_job
   (
     p_program_name   VARCHAR2

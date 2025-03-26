@@ -87,7 +87,7 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
        OR TRIM(p_program_action) IS NULL
     THEN
       raise_application_error(-20003
-                             ,'Входные параметры должны быть заполнены.');
+                             ,'Р’С…РѕРґРЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ Р·Р°РїРѕР»РЅРµРЅС‹.');
     END IF;
   
     BEGIN
@@ -96,34 +96,34 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
       WHEN e_program_not_exist THEN
         v_create := TRUE;
       WHEN e_not_all_arguments_defined THEN
-        -- если неверные аргументы, пересоздаем
+        -- РµСЃР»Рё РЅРµРІРµСЂРЅС‹Рµ Р°СЂРіСѓРјРµРЅС‚С‹, РїРµСЂРµСЃРѕР·РґР°РµРј
         dbms_scheduler.drop_program(p_program_name, TRUE);
         v_create := TRUE;
     END;
   
     IF v_create
     THEN
-      -- если нет такой программы
-      v_describe := describe_procedure(p_program_action); -- Если объекта нет, то v_object_not_exist
-      -- Если есть аргументы у процедуры
+      -- РµСЃР»Рё РЅРµС‚ С‚Р°РєРѕР№ РїСЂРѕРіСЂР°РјРјС‹
+      v_describe := describe_procedure(p_program_action); -- Р•СЃР»Рё РѕР±СЉРµРєС‚Р° РЅРµС‚, С‚Рѕ v_object_not_exist
+      -- Р•СЃР»Рё РµСЃС‚СЊ Р°СЂРіСѓРјРµРЅС‚С‹ Сѓ РїСЂРѕС†РµРґСѓСЂС‹
       IF v_describe.overload.count > 0
       THEN
-        -- Если количество агрументов 1 и имя аргумента null - это процедура без параметров
+        -- Р•СЃР»Рё РєРѕР»РёС‡РµСЃС‚РІРѕ Р°РіСЂСѓРјРµРЅС‚РѕРІ 1 Рё РёРјСЏ Р°СЂРіСѓРјРµРЅС‚Р° null - СЌС‚Рѕ РїСЂРѕС†РµРґСѓСЂР° Р±РµР· РїР°СЂР°РјРµС‚СЂРѕРІ
         IF v_describe.position.count > 0
            AND v_describe.argument_name(1) IS NOT NULL
         THEN
           e_number_of_arguments := v_describe.position(v_describe.position.last);
         END IF;
       END IF;
-      -- Создание программы
+      -- РЎРѕР·РґР°РЅРёРµ РїСЂРѕРіСЂР°РјРјС‹
       dbms_scheduler.create_program(program_name        => p_program_name
                                    ,program_type        => 'STORED_PROCEDURE'
                                    ,program_action      => p_program_action
                                    ,number_of_arguments => e_number_of_arguments
-                                   , -- кол-во параметров
+                                   , -- РєРѕР»-РІРѕ РїР°СЂР°РјРµС‚СЂРѕРІ
                                     enabled             => FALSE
                                    ,comments            => '');
-      -- Набираем параметры
+      -- РќР°Р±РёСЂР°РµРј РїР°СЂР°РјРµС‚СЂС‹
       IF v_describe.overload.count > 0
       THEN
         FOR i IN v_describe.overload.first .. v_describe.overload.last LOOP
@@ -138,17 +138,17 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
         END LOOP;
       END IF;
     
-      -- Включаем программу
+      -- Р’РєР»СЋС‡Р°РµРј РїСЂРѕРіСЂР°РјРјСѓ
       dbms_scheduler.enable(p_program_name);
     END IF;
   
   EXCEPTION
     WHEN v_object_not_exist THEN
-      dbms_output.put_line('Ошибка при создании программы');
-      dbms_output.put_line(p_program_action || ' - не найдена');
+      dbms_output.put_line('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РїСЂРѕРіСЂР°РјРјС‹');
+      dbms_output.put_line(p_program_action || ' - РЅРµ РЅР°Р№РґРµРЅР°');
       RAISE;
     WHEN OTHERS THEN
-      dbms_output.put_line('Ошибка при создании программы');
+      dbms_output.put_line('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РїСЂРѕРіСЂР°РјРјС‹');
       dbms_output.put_line(SQLERRM);
       RAISE;
   END create_program;
@@ -185,15 +185,15 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
       BEGIN
         FOR i IN 1 .. p_arguments.count LOOP
         
-          -- Проверяем тип данных в ANYDATA
+          -- РџСЂРѕРІРµСЂСЏРµРј С‚РёРї РґР°РЅРЅС‹С… РІ ANYDATA
           l_typecode := p_arguments(i).arg_anydata_value.GetType(l_anytype);
         
           IF l_typecode = dbms_types.TYPECODE_NAMEDCOLLECTION THEN
-            -- Извлекаем коллекцию
+            -- РР·РІР»РµРєР°РµРј РєРѕР»Р»РµРєС†РёСЋ
             IF p_arguments(i).arg_anydata_value.GetCollection(l_collection) = dbms_types.SUCCESS THEN
               l_status := 'record_count=: ' || l_collection.count();
             ELSE
-              l_status := 'ошибка извлечения коллекции';
+              l_status := 'РѕС€РёР±РєР° РёР·РІР»РµС‡РµРЅРёСЏ РєРѕР»Р»РµРєС†РёРё';
             END IF;
           ELSIF l_typecode = dbms_types.TYPECODE_CHAR Then
             IF p_arguments(i).arg_anydata_value.GetChar(l_char_value) = dbms_types.SUCCESS THEN
@@ -204,7 +204,7 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
               l_status := l_num_value;
             END IF;
           ELSE
-              l_status := 'неподдерживамый тип параметра';
+              l_status := 'РЅРµРїРѕРґРґРµСЂР¶РёРІР°РјС‹Р№ С‚РёРї РїР°СЂР°РјРµС‚СЂР°';
           END IF;
           dbms_output.put_line('JOB ' || v_name || ', param ' || p_arguments(i).arg_position || ', ' || l_status);
         END LOOP;
@@ -217,11 +217,11 @@ CREATE OR REPLACE PACKAGE BODY user_jobs_pkg AS
                                         ,arguments    => p_arguments
                                         ,enabled      => TRUE));
   
-    -- Произойдет полный rollback при ошибке
+    -- РџСЂРѕРёР·РѕР№РґРµС‚ РїРѕР»РЅС‹Р№ rollback РїСЂРё РѕС€РёР±РєРµ
     dbms_scheduler.create_jobs(v_newjobarr, 'TRANSACTIONAL');
   EXCEPTION
     WHEN OTHERS THEN
-      dbms_output.put_line('Ошибка при создании job');
+      dbms_output.put_line('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё job');
       dbms_output.put_line(SQLERRM);
       dbms_output.put_line(dbms_utility.format_call_stack);
       dbms_output.put_line(dbms_utility.format_error_backtrace);

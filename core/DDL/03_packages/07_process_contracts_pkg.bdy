@@ -9,12 +9,12 @@ CREATE OR REPLACE PACKAGE BODY process_contracts_pkg AS
     l_total_payments    credits.amount%TYPE;
     l_expected_payments credits.amount%TYPE;
   BEGIN
-    -- всего платежей
+    -- РІСЃРµРіРѕ РїР»Р°С‚РµР¶РµР№
     SELECT SUM(p.amount)
       INTO l_total_payments
       FROM payments p
      WHERE p.credit_id = p_credit_id;
-    -- ожидалось платежей
+    -- РѕР¶РёРґР°Р»РѕСЃСЊ РїР»Р°С‚РµР¶РµР№
     SELECT SUM(floor(months_between(least(p_check_date, c.end_date)
                                    ,trunc(c.start_date, 'MM') +
                                     c.due_day - 1))) * c.regular_sum
@@ -69,16 +69,16 @@ CREATE OR REPLACE PACKAGE BODY process_contracts_pkg AS
     END IF;
   END run_job;
 
-  -- ежедневный джоб расчета задолженности по кредитам
+  -- РµР¶РµРґРЅРµРІРЅС‹Р№ РґР¶РѕР± СЂР°СЃС‡РµС‚Р° Р·Р°РґРѕР»Р¶РµРЅРЅРѕСЃС‚Рё РїРѕ РєСЂРµРґРёС‚Р°Рј
   PROCEDURE run_multithread(p_recalc_date DATE DEFAULT trunc(SYSDATE)) IS
 
     --=================
-    -- блок констант
+    -- Р±Р»РѕРє РєРѕРЅСЃС‚Р°РЅС‚
     --=================
-    с_batch_size  CONSTANT PLS_INTEGER := 25; -- Размер пакета для обработки в одном джобе
-    c_job_name    CONSTANT VARCHAR2(50) := 'JOB_PROC_CRED$'; -- префикс имени джоба
-    c_max_jobs    CONSTANT PLS_INTEGER := 25; -- Максимальное число параллельных джобов
-    -- статусы, по которым проводим расчеты
+    СЃ_batch_size  CONSTANT PLS_INTEGER := 25; -- Р Р°Р·РјРµСЂ РїР°РєРµС‚Р° РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РІ РѕРґРЅРѕРј РґР¶РѕР±Рµ
+    c_job_name    CONSTANT VARCHAR2(50) := 'JOB_PROC_CRED$'; -- РїСЂРµС„РёРєСЃ РёРјРµРЅРё РґР¶РѕР±Р°
+    c_max_jobs    CONSTANT PLS_INTEGER := 25; -- РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ С‡РёСЃР»Рѕ РїР°СЂР°Р»Р»РµР»СЊРЅС‹С… РґР¶РѕР±РѕРІ
+    -- СЃС‚Р°С‚СѓСЃС‹, РїРѕ РєРѕС‚РѕСЂС‹Рј РїСЂРѕРІРѕРґРёРј СЂР°СЃС‡РµС‚С‹
     c_statuses CONSTANT sys.odcivarchar2list := sys.odcivarchar2list(const_pkg.c_credit_active
                                                                     ,const_pkg.c_credit_overdue);
   
@@ -103,25 +103,25 @@ CREATE OR REPLACE PACKAGE BODY process_contracts_pkg AS
     OPEN cur_credits_with_debt(c_statuses);
 
     LOOP
-      -- Читаем очередной батч данных
+      -- Р§РёС‚Р°РµРј РѕС‡РµСЂРµРґРЅРѕР№ Р±Р°С‚С‡ РґР°РЅРЅС‹С…
       FETCH cur_credits_with_debt
        BULK COLLECT
-       INTO v_import_data LIMIT с_batch_size;
+       INTO v_import_data LIMIT СЃ_batch_size;
        EXIT WHEN v_import_data.count = 0;
 
-      -- Ждем, пока число активных джобов не снизится
+      -- Р–РґРµРј, РїРѕРєР° С‡РёСЃР»Рѕ Р°РєС‚РёРІРЅС‹С… РґР¶РѕР±РѕРІ РЅРµ СЃРЅРёР·РёС‚СЃСЏ
       LOOP
-        -- Проверяем количество активных джобов
+        -- РџСЂРѕРІРµСЂСЏРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р°РєС‚РёРІРЅС‹С… РґР¶РѕР±РѕРІ
         SELECT COUNT(*)
           INTO v_active_jobs
           FROM user_scheduler_jobs
          WHERE job_name LIKE c_job_name || '_%'
            AND state IN ('RUNNING', 'SCHEDULED');
 
-        -- Если запущено меньше, чем MAX_JOBS_RUNNING, выходим из цикла
+        -- Р•СЃР»Рё Р·Р°РїСѓС‰РµРЅРѕ РјРµРЅСЊС€Рµ, С‡РµРј MAX_JOBS_RUNNING, РІС‹С…РѕРґРёРј РёР· С†РёРєР»Р°
         EXIT WHEN v_active_jobs < c_max_jobs;
 
-        -- Ждём 5 секунд, чтобы не перегружать БД
+        -- Р–РґС‘Рј 5 СЃРµРєСѓРЅРґ, С‡С‚РѕР±С‹ РЅРµ РїРµСЂРµРіСЂСѓР¶Р°С‚СЊ Р‘Р”
         dbms_session.sleep(5);
       END LOOP;
 
@@ -129,7 +129,7 @@ CREATE OR REPLACE PACKAGE BODY process_contracts_pkg AS
                                                 ,anydata.ConvertCollection(v_import_data))
                                      ,sys.jobarg(2
                                                 ,anydata.ConvertChar(const_pkg.c_yes)));
-      -- Создадим и запустим джоб
+      -- РЎРѕР·РґР°РґРёРј Рё Р·Р°РїСѓСЃС‚РёРј РґР¶РѕР±
       user_jobs_pkg.create_user_job(p_program_name   => 'p_process_contracts'
                                    ,p_program_action => $$plsql_Unit || '.run_job'
                                    ,p_arguments      => v_arguments
@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE BODY process_contracts_pkg AS
 
     END LOOP;
   
-    -- Закрываем курсор
+    -- Р—Р°РєСЂС‹РІР°РµРј РєСѓСЂСЃРѕСЂ
     CLOSE cur_credits_with_debt;
   END run_multithread;
 

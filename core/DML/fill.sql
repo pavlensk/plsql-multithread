@@ -1,4 +1,4 @@
--- генерация кредитов
+-- РіРµРЅРµСЂР°С†РёСЏ РєСЂРµРґРёС‚РѕРІ
 INSERT INTO credits
   (client_id, amount, interest_rate, start_date, end_date, due_day, regular_sum, status)
   SELECT client_id
@@ -17,18 +17,18 @@ INSERT INTO credits
            ELSE
             'overdue'
          END
-    FROM (SELECT Rownum AS client_id                        -- случайный клиент (до 50 клиентов)
-               , round(dbms_random.value(50000, 500000), 2) AS amount   -- сумма кредита от 50k до 500k
-               , round(dbms_random.value(16, 24), 2) AS interest_rate   -- процентная ставка от 5% до 15%
-               , trunc(add_months(SYSDATE, -LEVEL), 'DD') AS start_date -- дата начала кредита (в прошлом)
+    FROM (SELECT Rownum AS client_id                        -- СЃР»СѓС‡Р°Р№РЅС‹Р№ РєР»РёРµРЅС‚ (РґРѕ 50 РєР»РёРµРЅС‚РѕРІ)
+               , round(dbms_random.value(50000, 500000), 2) AS amount   -- СЃСѓРјРјР° РєСЂРµРґРёС‚Р° РѕС‚ 50k РґРѕ 500k
+               , round(dbms_random.value(16, 24), 2) AS interest_rate   -- РїСЂРѕС†РµРЅС‚РЅР°СЏ СЃС‚Р°РІРєР° РѕС‚ 5% РґРѕ 15%
+               , trunc(add_months(SYSDATE, -LEVEL), 'DD') AS start_date -- РґР°С‚Р° РЅР°С‡Р°Р»Р° РєСЂРµРґРёС‚Р° (РІ РїСЂРѕС€Р»РѕРј)
                , trunc(add_months(add_months(SYSDATE, -LEVEL)
                                  ,trunc(dbms_random.value(60, 84)))
-                      ,'DD') AS end_date                                -- дата окончания (5-7 лет от старта)
+                      ,'DD') AS end_date                                -- РґР°С‚Р° РѕРєРѕРЅС‡Р°РЅРёСЏ (5-7 Р»РµС‚ РѕС‚ СЃС‚Р°СЂС‚Р°)
                , MOD(LEVEL, 3) AS flag 
             FROM dual
           CONNECT BY LEVEL <= 100);
 
--- Генерация 40-60 платежей для каждого кредита
+-- Р“РµРЅРµСЂР°С†РёСЏ 40-60 РїР»Р°С‚РµР¶РµР№ РґР»СЏ РєР°Р¶РґРѕРіРѕ РєСЂРµРґРёС‚Р°
 INSERT INTO payments
   (credit_id, payment_date, amount)
   SELECT credit_id, pay_date, amount
