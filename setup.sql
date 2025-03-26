@@ -9,8 +9,6 @@ set verify off
 @core\DDL\03_packages\03_const_pkg.spc
 @core\DDL\03_packages\04_process_contracts_pkg.spc
 @core\DDL\03_packages\05_process_contracts_pkg.bdy
-@core\DDL\03_packages\06_process_contracts_pkg.spc
-@core\DDL\03_packages\07_process_contracts_pkg.bdy
 @core\DML\fill.sql
 
 set echo off

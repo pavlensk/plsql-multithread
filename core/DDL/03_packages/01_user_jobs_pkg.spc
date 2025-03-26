@@ -1,6 +1,5 @@
 CREATE OR REPLACE PACKAGE user_jobs_pkg AS
 
-  -- этот тип нужен для джобов, не смотри на него, пусть таким и остается
   TYPE t_describe IS RECORD(
      NAME          VARCHAR2(100)
     ,overload      dbms_describe.number_table
